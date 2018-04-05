@@ -55,13 +55,12 @@ class Grid extends Component {
     return PLAYERS[nextIdx];
   }
 
-  updateCell(rowIdx, colIdx) {
+  updateCell(rowIdx, colIdx, grid) {
     const newColor = this.getNextPlayer();
 
-    const grid = clone(this.state.grid);
     grid[rowIdx][colIdx] = newColor;
 
-    this.setState({ grid, turn: newColor });
+    return grid;
   }
 
   getValidNeighbors(rowIdx, colIdx) {
@@ -87,33 +86,73 @@ class Grid extends Component {
     return this.state.grid[rowIdx][colIdx];
   }
 
-  updateNeighborCells(rowIdx, colIdx, turn) {
+  checkRow(x, y) {
+    const value = this.state.grid[x][y-1];
+
+    if (value) {
+      console.log('value', value);
+      return true;
+    }
+
+    return false;
+  }
+
+  checkColumn(x, y) {
+    const value = this.state.grid[x-1][y];
+
+    if (value) {
+      console.log('value', value);
+      return true;
+    }
+
+    return false;
+  }
+
+  getNeighborCellsToUpdate(rowIdx, colIdx, turn, grid) {
     const neighbors = this.getValidNeighbors(rowIdx, colIdx);
 
     neighbors.forEach(neighbor => {
       const value = this.getValue(neighbor[0], neighbor[1]);
+      let match = false
 
+      if (value && neighbor[0] === rowIdx) {
+        match = this.checkRow(neighbor[0], neighbor[1]);
+      } else if (value && neighbor[1] === colIdx) {
+        match = this.checkColumn(neighbor[0], neighbor[1]);
+      }
+
+      if (match) {
+        grid = this.updateCell(neighbor[0], neighbor[1], grid);
+      }
     })
+
+    return grid;
   }
 
   onCellClick(rowIdx, colIdx) {
     return () => {
       const turn = this.state.turn;
+      let grid = clone(this.state.grid);
 
-      this.updateCell(rowIdx, colIdx);
-      this.updateNeighborCells(rowIdx, colIdx, turn);
+      grid = this.updateCell(rowIdx, colIdx, grid);
+      grid = this.getNeighborCellsToUpdate(rowIdx, colIdx, turn, grid);
+      this.setState({ turn: this.getNextPlayer(), grid });
     }
   }
 
   renderCell(row, column) {
     const color = this.state.grid[row][column];
 
-    return (
-      <Cell
-        onClick={ this.onCellClick(row, column) }
-        color={ color }
-      />
-    )
+    const props = { color };
+
+    if (color) {
+      props.style = { cursor: 'no-drop' };
+    } else {
+      props.style = { cursor: 'pointer' };
+      props.onClick = this.onCellClick(row, column);
+    }
+
+    return <Cell { ...props } />;
   }
 
   renderColumns(row) {

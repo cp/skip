@@ -5,6 +5,7 @@ import classnames from 'classnames';
 const propTypes = {
   onClick: PropTypes.func,
   color: PropTypes.oneOf(['red', 'black']),
+  style: PropTypes.object,
 };
 
 class Cell extends React.Component {
@@ -16,6 +17,7 @@ class Cell extends React.Component {
 
     return (
       <div
+        style={ this.props.style }
         className={ className }
         onClick={ this.props.onClick }
       />
