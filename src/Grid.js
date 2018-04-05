@@ -1,26 +1,15 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import clone from 'clone';
 
 import Cell from './Cell';
 
-const ROWS = 8;
-const COLUMNS = 8;
-const PLAYERS = ['red', 'black'];
-
-const buildGrid = () => {
-  const rows = [];
-
-  for (let r = 0; r < ROWS; r++) {
-    const row = [];
-
-    for (let c = 0; c < COLUMNS; c++) {
-      row.push(null);
-    }
-
-    rows.push(row);
-  }
-
-  return rows;
+const propTypes = {
+  columns: PropTypes.number,
+  rows: PropTypes.number,
+  players: PropTypes.arrayOf(PropTypes.string),
+  grid: PropTypes.array,
+  turn: PropTypes.string,
 }
 
 const validateCells = (cells) => {
@@ -31,28 +20,25 @@ class Grid extends Component {
   constructor(props) {
     super(props);
 
-    const grid = buildGrid();
-
-    this.state = {
-      grid,
-      turn: PLAYERS[0]
-    };
-
     this.onCellClick = this.onCellClick.bind(this);
   }
 
+  onUpdate(turn, grid) {
+    this.props.onUpdate(turn, grid)
+  };
+
   getNextPlayer() {
-    const currentPlayer = this.state.turn;
-    const currentIdx = PLAYERS.indexOf(currentPlayer);
+    const currentPlayer = this.props.turn;
+    const currentIdx = this.props.players.indexOf(currentPlayer);
     let nextIdx;
 
-    if (PLAYERS[currentIdx + 1]) {
+    if (this.props.players[currentIdx + 1]) {
       nextIdx = currentIdx + 1;
     } else {
       nextIdx = 0;
     }
 
-    return PLAYERS[nextIdx];
+    return this.props.players[nextIdx];
   }
 
   updateCell(rowIdx, colIdx, grid) {
@@ -83,14 +69,13 @@ class Grid extends Component {
   }
 
   getValue(rowIdx, colIdx) {
-    return this.state.grid[rowIdx][colIdx];
+    return this.props.grid[rowIdx][colIdx];
   }
 
   checkRow(x, y) {
-    const value = this.state.grid[x][y-1];
+    const value = this.props.grid[x][y-1];
 
     if (value) {
-      console.log('value', value);
       return true;
     }
 
@@ -98,10 +83,9 @@ class Grid extends Component {
   }
 
   checkColumn(x, y) {
-    const value = this.state.grid[x-1][y];
+    const value = this.props.grid[x-1][y];
 
     if (value) {
-      console.log('value', value);
       return true;
     }
 
@@ -131,17 +115,17 @@ class Grid extends Component {
 
   onCellClick(rowIdx, colIdx) {
     return () => {
-      const turn = this.state.turn;
-      let grid = clone(this.state.grid);
+      const turn = this.props.turn;
+      let grid = clone(this.props.grid);
 
       grid = this.updateCell(rowIdx, colIdx, grid);
       grid = this.getNeighborCellsToUpdate(rowIdx, colIdx, turn, grid);
-      this.setState({ turn: this.getNextPlayer(), grid });
+      this.onUpdate(this.getNextPlayer(), grid);
     }
   }
 
   renderCell(row, column) {
-    const color = this.state.grid[row][column];
+    const color = this.props.grid[row][column];
 
     const props = { color };
 
@@ -158,7 +142,7 @@ class Grid extends Component {
   renderColumns(row) {
     let columns = [];
 
-    for (let i = 0; i < COLUMNS; i++) {
+    for (let i = 0; i < this.props.columns; i++) {
       const cell = this.renderCell(row, i);
 
       columns.push(
@@ -174,7 +158,7 @@ class Grid extends Component {
   renderRows() {
     let rows = [];
 
-    for (let i = 0; i < ROWS; i++) {
+    for (let i = 0; i < this.props.rows; i++) {
       const columns = this.renderColumns(i);
 
       rows.push(<div key={ i } className="row">{ columns }</div>);
@@ -189,5 +173,7 @@ class Grid extends Component {
     return <div className="grid">{ rows }</div>
   }
 }
+
+Grid.propTypes = propTypes;
 
 export default Grid;
